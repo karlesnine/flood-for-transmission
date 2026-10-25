@@ -5,16 +5,25 @@ import Transmission from '~helpers/Transmission';
 const TORRENT_REQUEST_INTERVAL = 1000;
 const transmission = new Transmission();
 let updateTorrentTimeout = null;
+// The torrent currently shown by the details panel. Responses that come back
+// after the user switched to another torrent are dropped, and so is the polling
+// loop of the previous torrent: without this, the previous torrent can be
+// written over the current one (issue #522).
+let currentTorrentId = 0;
 
 function getTorrent(torrentId, setTorrent) {
   if (updateTorrentTimeout) {
     clearTimeout(updateTorrentTimeout);
+    updateTorrentTimeout = null;
   }
 
   transmission
     .getTorrents(torrentId, Object.values(TRANSMISSION_COLUMN))
     .then((torrents) => {
       if (!torrents.length) {
+        return;
+      }
+      if (torrentId !== currentTorrentId) {
         return;
       }
       setTorrent({
@@ -33,6 +42,9 @@ function getTorrent(torrentId, setTorrent) {
       console.error(e);
     })
     .finally(() => {
+      if (torrentId !== currentTorrentId) {
+        return;
+      }
       updateTorrentTimeout = setTimeout(
         getTorrent,
         TORRENT_REQUEST_INTERVAL,
@@ -46,7 +58,17 @@ function createTorrentDetailsStore() {
   const torrentId = writable(0);
   const { set, update, subscribe } = writable({}, (set) => {
     const unsubscribe = torrentId.subscribe(($torrentId) => {
-      if (!$torrentId) return set({});
+      currentTorrentId = $torrentId;
+      if (updateTorrentTimeout) {
+        clearTimeout(updateTorrentTimeout);
+        updateTorrentTimeout = null;
+      }
+
+      // Drop the previous torrent right away: showing its values while the new
+      // one loads is what made the panel flicker between two torrents.
+      set({});
+
+      if (!$torrentId) return;
 
       getTorrent($torrentId, set);
     });
@@ -62,7 +84,14 @@ function createTorrentDetailsStore() {
     update,
     subscribe,
     setTorrentId: torrentId.set,
-    clearTorrentId: () => torrentId.set(0),
+    clearTorrentId: () => {
+      currentTorrentId = 0;
+      if (updateTorrentTimeout) {
+        clearTimeout(updateTorrentTimeout);
+        updateTorrentTimeout = null;
+      }
+      torrentId.set(0);
+    },
     setPriority: (torrent, fileIndices, priority) => {
       let params;
       const fileIndicesInt = fileIndices.map((fileIndex) =>

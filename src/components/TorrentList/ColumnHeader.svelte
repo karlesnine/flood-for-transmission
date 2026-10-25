@@ -26,7 +26,7 @@
     class:asc={$sorting.id === id && $sorting.direction === 'asc'}
     class:desc={$sorting.id === id && $sorting.direction === 'desc'}
     class:wrap={$tableHeaderConfig}
-    style="width: {$columnSizes[id]}px"
+    style="width: calc({$columnSizes[id]}px * var(--column-scale, 1))"
     on:click={handleClick}
   >
     {uiColumns.getColumnLabel(id)}

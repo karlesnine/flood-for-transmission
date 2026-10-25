@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import {
     uiColumns,
     selectedTorrents,
@@ -19,6 +20,45 @@
   const sortedTorrents = torrents.sorted;
   const activeColumns = uiColumns.active;
   const { totalSize } = uiColumns;
+
+  // The table never gets wider than the space available: when the configured
+  // widths do not fit, the browser scales the columns down instead of pushing
+  // the rightmost ones out of the window.
+  let wrapperElement;
+  let availableWidth = 0;
+
+  const measureAvailableWidth = () => {
+    if (!wrapperElement) return;
+    const width = wrapperElement.clientWidth;
+    if (width && width !== availableWidth) availableWidth = width;
+  };
+
+  onMount(() => {
+    measureAvailableWidth();
+    window.addEventListener('resize', measureAvailableWidth);
+
+    let observer;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(measureAvailableWidth);
+      observer.observe(wrapperElement);
+    }
+
+    return () => {
+      window.removeEventListener('resize', measureAvailableWidth);
+      if (observer) observer.disconnect();
+    };
+  });
+
+  $: renderedTableWidth =
+    availableWidth > 0 ? Math.min($totalSize, availableWidth) : $totalSize;
+
+  // A table never shrinks below the sum of its column widths, so when the
+  // configured widths do not fit, the columns themselves are scaled down.
+  // That keeps every enabled column visible, whatever the window size.
+  $: columnScale =
+    availableWidth > 0 && $totalSize > availableWidth
+      ? availableWidth / $totalSize
+      : 1;
 
   let prio = 0;
   $: {
@@ -136,8 +176,11 @@
   }}
 />
 
-<div class="wrapper">
-  <table class="table" style="width: {$totalSize}px">
+<div class="wrapper" bind:this={wrapperElement}>
+  <table
+    class="table"
+    style="width: {renderedTableWidth}px; --column-scale: {columnScale}"
+  >
     <thead class="table-header">
       {#each $activeColumns as column (column.id)}
         <ColumnHeader id={column.id} />

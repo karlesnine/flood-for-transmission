@@ -36,7 +36,7 @@ const getConfigurationColumnsWithDefaults = (configColumns) => {
   return configColumns.map(({ id, ...configColumn }) => configColumn);
 };
 
-export default await fetch('./config.json')
+export default await fetch('./config.json', { cache: 'no-store' })
   .then((res) => {
     if (res.ok) {
       return res.json();

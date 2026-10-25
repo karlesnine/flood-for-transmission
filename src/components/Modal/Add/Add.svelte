@@ -6,10 +6,14 @@
   import Checkbox from '~components/Checkbox';
   import Button from '~components/Button';
   import { modals, torrents, alerts, session } from '~helpers/stores';
+  import Transmission from '~helpers/Transmission';
+  import { getSize } from '~helpers/sizeHelper';
   import { isValidUrl } from '~helpers/urlHelper';
   import {
     SESSION_COLUMN_DOWNLOAD_DIR,
     SESSION_COLUMN_START_ADDED,
+    SESSION_COLUMN_UNITS,
+    SESSION_COLUMN_UNITS_SIZE,
   } from '~helpers/constants/columns';
   import { PATH_VALIDATION_REGEX } from '~helpers/constants/paths';
   import {
@@ -27,6 +31,47 @@
   let files = null;
   let destination = null;
   let start = null;
+
+  // Free space of the destination, so that a nearly full disk is noticed before
+  // the torrent is added instead of after it fails.
+  const transmission = new Transmission();
+  const FREE_SPACE_DELAY = 400;
+  let freeSpace = null;
+  let freeSpaceTimeout;
+
+  const loadFreeSpace = (path) => {
+    clearTimeout(freeSpaceTimeout);
+    if (!path) {
+      freeSpace = null;
+      return;
+    }
+
+    freeSpaceTimeout = setTimeout(() => {
+      transmission
+        .getFreeSpace(path)
+        .then((response) => {
+          if (path !== destination) return;
+          freeSpace = response?.arguments ?? null;
+        })
+        .catch(() => {
+          if (path === destination) freeSpace = null;
+        });
+    }, FREE_SPACE_DELAY);
+  };
+
+  $: loadFreeSpace(destination);
+
+  const formatSize = (bytes) =>
+    getSize(bytes, {
+      perSize: $session?.[SESSION_COLUMN_UNITS]?.[SESSION_COLUMN_UNITS_SIZE],
+    });
+
+  $: freeSpaceText = (() => {
+    if (!freeSpace?.total_size) return null;
+    const free = formatSize(freeSpace['size-bytes']);
+    const total = formatSize(freeSpace.total_size);
+    return `${free.value}${free.size} free of ${total.value}${total.size}`;
+  })();
 
   $: cleanFileNames = fileNames
     .map((fileName) => fileName.trim())
@@ -151,6 +196,9 @@
       validationMessage="Destination must be an absolute path."
       required
     />
+    {#if freeSpaceText}
+      <div class="free-space">{freeSpaceText}</div>
+    {/if}
     <div class="button-group">
       <Checkbox label="Start Torrent" bind:checked={start} />
       <Button priority="tertiary" on:click={modals.close}>Cancel</Button>
@@ -235,5 +283,12 @@
     justify-content: flex-end;
     margin-top: 25px;
     gap: 10px;
+  }
+
+  .free-space {
+    color: var(--color-modal-text);
+    font-size: 11px;
+    opacity: 0.75;
+    margin-top: -8px;
   }
 </style>

@@ -256,6 +256,27 @@ function createTorrentsStore() {
           };
         });
       }),
+    // Transmission applies these to the current queue order, so the torrents
+    // land where they were asked to; the list refreshes on its own.
+    queueMove: (ids, direction) => {
+      const move = {
+        top: () => transmission.queueMoveTop(ids),
+        up: () => transmission.queueMoveUp(ids),
+        down: () => transmission.queueMoveDown(ids),
+        bottom: () => transmission.queueMoveBottom(ids),
+      }[direction];
+
+      if (!move) return Promise.resolve();
+
+      // A queue move changes the position of many torrents at once, and the
+      // list only asks for recently active ones: refetch everything so the new
+      // order shows up whatever Transmission reports as changed.
+      return move()
+        .then(() => getAllTorrents())
+        .catch(() => {
+          alerts.add('Failed to move the torrents in the queue', 'negative');
+        });
+    },
     start: (ids) =>
       store.update((state) => {
         transmission.startTorrents(ids).catch(() => store.set(state));

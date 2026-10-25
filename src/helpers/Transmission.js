@@ -154,6 +154,22 @@ export default class Transmission {
     return this.rpcCall('torrent-reannounce', { ids });
   }
 
+  queueMoveTop(ids = []) {
+    return this.rpcCall('queue-move-top', { ids });
+  }
+
+  queueMoveUp(ids = []) {
+    return this.rpcCall('queue-move-up', { ids });
+  }
+
+  queueMoveDown(ids = []) {
+    return this.rpcCall('queue-move-down', { ids });
+  }
+
+  queueMoveBottom(ids = []) {
+    return this.rpcCall('queue-move-bottom', { ids });
+  }
+
   getStats() {
     return this.rpcCall('session-stats').then(
       (response) => response?.arguments

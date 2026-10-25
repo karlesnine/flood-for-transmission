@@ -19,6 +19,25 @@ import copy from 'rollup-plugin-copy';
 const production = !process.env.ROLLUP_WATCH;
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
+// Stamp of the build, shown in Settings > About. It answers the recurring
+// question "which version is the server actually serving?".
+const buildVersion = (() => {
+  const date = new Date().toISOString().slice(0, 10);
+  try {
+    const commit = childProcess
+      .execSync('git rev-parse --short HEAD', { cwd: __dirname })
+      .toString()
+      .trim();
+    const dirty = childProcess
+      .execSync('git status --porcelain', { cwd: __dirname })
+      .toString()
+      .trim();
+    return `${date} · ${commit}${dirty ? ' · local changes' : ''}`;
+  } catch (e) {
+    return date;
+  }
+})();
+
 if (!production) {
   dotenv.config();
 }
@@ -119,6 +138,7 @@ export default {
         : undefined,
       __TRANSMISSION_SSL__: process.env.TRANSMISSION_SSL === 'true',
       __ENV__: production ? '"production"' : '"development"',
+      __BUILD_VERSION__: JSON.stringify(buildVersion),
     }),
 
     // In dev mode, call `npm run start` once

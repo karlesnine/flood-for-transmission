@@ -80,6 +80,10 @@ _Note:_ If you run Flood for Transmission behind SSL and in Chrome you can also 
 - `"SHOW_DISK_USAGE"`
   - Type: Boolean `true` or `false`
   - Will only show for Transmission 4 and higher
+- `"DISABLE_SERVICE_WORKER"`
+  - Type: Boolean `true` or `false`
+  - Removes the service worker when set to `true`, and does not register a new one. Use it if the browser keeps serving old files after an update, or hides a login prompt behind a cached page.
+
 
 ### Updating
 

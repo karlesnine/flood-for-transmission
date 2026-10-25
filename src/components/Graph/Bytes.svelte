@@ -5,6 +5,7 @@
     SESSION_COLUMN_UNITS,
     SESSION_COLUMN_UNITS_SIZE,
     SESSION_STATS_CUMULATIVE_STATS,
+    SESSION_STATS_CURRENT_STATS,
     SESSION_STATS_TOTAL_UPLOAD,
     SESSION_STATS_TOTAL_DOWNLOAD,
   } from '~helpers/constants/columns';
@@ -23,12 +24,19 @@
       ? SESSION_STATS_TOTAL_UPLOAD
       : SESSION_STATS_TOTAL_DOWNLOAD;
 
-  $: ({ value, size } = getSize(
-    $sessionStats[SESSION_STATS_CUMULATIVE_STATS]?.[valueColumn],
-    {
-      perSize: $session[SESSION_COLUMN_UNITS]?.[SESSION_COLUMN_UNITS_SIZE],
-    }
-  ));
+  const format = (bytes) =>
+    getSize(bytes, {
+      perSize: $session?.[SESSION_COLUMN_UNITS]?.[SESSION_COLUMN_UNITS_SIZE],
+    });
+
+  // Both figures are shown: everything transferred since Transmission was
+  // installed (cumulative) and what this session transferred (current).
+  $: total = format(
+    $sessionStats[SESSION_STATS_CUMULATIVE_STATS]?.[valueColumn]
+  );
+  $: current = format(
+    $sessionStats[SESSION_STATS_CURRENT_STATS]?.[valueColumn]
+  );
 </script>
 
 <div
@@ -37,8 +45,12 @@
   class:download={direction === 'download'}
   class:hidden={hidden}
 >
-  {value}
-  <span class="bytes__size">{size}</span>
+  <span class="bytes__total"
+    >{total.value}<span class="bytes__size">{total.size}</span></span
+  >
+  <span class="bytes__session" title="Transferred since Transmission started"
+    >session {current.value}<span class="bytes__size">{current.size}</span></span
+  >
 </div>
 
 <style>
@@ -47,6 +59,9 @@
     font-size: 12px;
     transition: opacity 0.25s;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .bytes.upload {
@@ -59,6 +74,11 @@
 
   .bytes__size {
     font-size: 10px;
+  }
+
+  .bytes__session {
+    font-size: 11px;
+    opacity: 0.85;
   }
 
   .hidden {

@@ -6,6 +6,7 @@
     SESSION_COLUMN_UNITS_SIZE,
   } from '~helpers/constants/columns';
   import { getSize } from '~helpers/sizeHelper';
+  import { getTorrentError } from '~helpers/filterHelper';
   import DateRenderer from '~components/TorrentList/Renderers/DateRenderer.svelte';
   import BooleanRenderer from '~components/TorrentList/Renderers/BooleanRenderer.svelte';
   import Badge from '~components/Badge';
@@ -289,7 +290,7 @@
 
     <div class="column column--label">Error text</div>
     <div class="column column--value">
-      {$torrentDetails[TRANSMISSION_COLUMN.ERROR_STRING]}
+      {getTorrentError($torrentDetails) || '-'}
     </div>
   </div>
 

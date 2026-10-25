@@ -198,6 +198,7 @@ export const SESSION_COLUMN = {
 };
 
 export const SESSION_STATS_CUMULATIVE_STATS = 'cumulative-stats';
+export const SESSION_STATS_CURRENT_STATS = 'current-stats';
 export const SESSION_STATS_TOTAL_UPLOAD = 'uploadedBytes';
 export const SESSION_STATS_TOTAL_DOWNLOAD = 'downloadedBytes';
 

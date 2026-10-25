@@ -3,6 +3,7 @@
 </script>
 
 <Header text="Flood Transmission" />
+<p class="version">Version {__BUILD_VERSION__}</p>
 <p>
   Flood for Transmission is an alternative Web UI for Transmission. It's a
   frontend web app that doesn't require any extra service running to communicate
@@ -31,6 +32,12 @@
     color: var(--color-modal-text);
     font-size: 14px;
     margin-bottom: 15px;
+  }
+
+  .version {
+    font-size: 13px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
   }
 
   a {

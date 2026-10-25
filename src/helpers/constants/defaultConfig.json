@@ -22,5 +22,6 @@
     "MOBILE_VIEW": {
         "grid": false
     },
-    "DISABLE_SERVICE_WORKER": false
+    "DISABLE_SERVICE_WORKER": false,
+    "DELETE_LOCAL_DATA_BY_DEFAULT": false
 }

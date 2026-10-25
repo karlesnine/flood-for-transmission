@@ -12,14 +12,39 @@ import {
   TRANSMISSION_COLUMN_DOWNLOAD_PROGRESS,
   TRANSMISSION_COLUMN_STATUS,
   TRANSMISSION_COLUMN_ERROR,
+  TRANSMISSION_COLUMN_ERROR_STRING,
   TRANSMISSION_COLUMN_NAME,
   TRANSMISSION_COLUMN_LABELS,
+  TRANSMISSION_COLUMN_PRIVATE,
   TRANSMISSION_COLUMN_TRACKERS,
+  TRANSMISSION_COLUMN_TRACKER_STATS,
   TRANSMISSION_COLUMN_DOWNLOAD_RATE,
   TRANSMISSION_COLUMN_UPLOAD_RATE,
   TRANSMISSION_COLUMN_PRIORITY,
 } from '~helpers/constants/columns';
 import { trackerStripper } from '~helpers/trackerHelper';
+
+// A private tracker that refuses the announce kills the torrent, and
+// Transmission reports nothing at torrent level in that case: the tracker
+// message is the only signal (issue #572).
+export function getTrackerError(torrent) {
+  if (!torrent[TRANSMISSION_COLUMN_PRIVATE]) return null;
+
+  const trackerStats = torrent[TRANSMISSION_COLUMN_TRACKER_STATS] ?? [];
+  const failedTracker = trackerStats.find(
+    (tracker) =>
+      tracker.lastAnnounceSucceeded === false &&
+      !!tracker.lastAnnounceResult &&
+      tracker.lastAnnounceResult !== 'Success'
+  );
+
+  return failedTracker?.lastAnnounceResult ?? null;
+}
+
+// The message to show for a torrent: its own error first, then the tracker one.
+export function getTorrentError(torrent) {
+  return torrent[TRANSMISSION_COLUMN_ERROR_STRING] || getTrackerError(torrent);
+}
 
 export function statusFilter(status, torrent) {
   const isDownloading = torrent[TRANSMISSION_COLUMN_DOWNLOAD_RATE] > 0;
@@ -52,7 +77,9 @@ export function statusFilter(status, torrent) {
         STATUSES.indexOf(STATUS_SEED_WAITING),
       ].includes(torrent[TRANSMISSION_COLUMN_STATUS]);
     case 'error':
-      return torrent[TRANSMISSION_COLUMN_ERROR];
+      return !!(
+        torrent[TRANSMISSION_COLUMN_ERROR] || getTrackerError(torrent)
+      );
     default:
       return true;
   }

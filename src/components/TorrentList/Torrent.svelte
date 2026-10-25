@@ -22,6 +22,7 @@
   } from '~helpers/constants/columns';
   import { generateTorrentStatusClass } from '~helpers/classHelper';
   import { trackerStripper } from '~helpers/trackerHelper';
+  import { getTorrentError } from '~helpers/filterHelper';
   import { contextmenu } from '~helpers/actions';
   import { MediaQuery } from 'svelte/reactivity';
 
@@ -210,7 +211,7 @@
       id: UI_COLUMN.ERROR.id,
       classname: UI_COLUMN.ERROR.class,
       component: TextRenderer,
-      props: () => ({ value: torrent[TRANSMISSION_COLUMN.ERROR_STRING] }),
+      props: () => ({ value: getTorrentError(torrent) }),
     },
     [UI_COLUMN.PRIVATE.id]: {
       id: UI_COLUMN.PRIVATE.id,

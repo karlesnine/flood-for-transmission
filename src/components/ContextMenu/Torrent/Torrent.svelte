@@ -12,6 +12,10 @@
   export let onAsk;
   export let onLabels;
   export let onLocation;
+  export let onQueueMoveTop;
+  export let onQueueMoveUp;
+  export let onQueueMoveDown;
+  export let onQueueMoveBottom;
   export let onPrio;
 
   let priorityIndicator;
@@ -35,6 +39,19 @@
 <hr />
 <li on:click={(...args) => onItemClick(onLabels, args)}>Set labels</li>
 <li on:click={(...args) => onItemClick(onLocation, args)}>Set location</li>
+<hr />
+<li on:click={(...args) => onItemClick(onQueueMoveTop, args)}>
+  Move to top of queue
+</li>
+<li on:click={(...args) => onItemClick(onQueueMoveUp, args)}>
+  Move up in queue
+</li>
+<li on:click={(...args) => onItemClick(onQueueMoveDown, args)}>
+  Move down in queue
+</li>
+<li on:click={(...args) => onItemClick(onQueueMoveBottom, args)}>
+  Move to bottom of queue
+</li>
 <hr />
 <li on:click={clickOnPriorityIndicator}>
   Priority

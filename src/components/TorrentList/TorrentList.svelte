@@ -155,6 +155,18 @@
         onAsk: torrents.reannounce.bind(this, $selectedTorrents),
         onLabels: modals.open.bind(this, { component: Labels }),
         onLocation: modals.open.bind(this, { component: Location }),
+        onQueueMoveTop: torrents.queueMove.bind(this, $selectedTorrents, 'top'),
+        onQueueMoveUp: torrents.queueMove.bind(this, $selectedTorrents, 'up'),
+        onQueueMoveDown: torrents.queueMove.bind(
+          this,
+          $selectedTorrents,
+          'down'
+        ),
+        onQueueMoveBottom: torrents.queueMove.bind(
+          this,
+          $selectedTorrents,
+          'bottom'
+        ),
         onPrio: changePrio,
       },
     });

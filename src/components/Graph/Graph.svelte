@@ -3,7 +3,7 @@
   import { scaleLinear } from 'd3-scale';
   import { line, area, curveMonotoneX } from 'd3-shape';
   import { max } from 'd3-array';
-  import { rateData, session, torrents } from '~helpers/stores';
+  import { rateData, session, sessionStats, torrents } from '~helpers/stores';
   import Icon from '~components/Icon';
   import Bytes from '~components/Graph/Bytes.svelte';
   import SpeedLimit from '~components/Graph/SpeedLimit.svelte';
@@ -12,7 +12,25 @@
   import {
     SESSION_COLUMN_UNITS,
     SESSION_COLUMN_UNITS_SIZE,
+    SESSION_STATS_CURRENT_STATS,
+    SESSION_STATS_TOTAL_UPLOAD,
+    SESSION_STATS_TOTAL_DOWNLOAD,
   } from '~helpers/constants/columns';
+
+  // Volume transferred since Transmission started. It gets its own line under
+  // the two counters: the counters sit in a narrow panel, and a second line
+  // there leaves no room for the figures.
+  const formatBytes = (bytes) =>
+    getSize(bytes, {
+      perSize: $session[SESSION_COLUMN_UNITS]?.[SESSION_COLUMN_UNITS_SIZE],
+    });
+
+  $: sessionDownload = formatBytes(
+    $sessionStats[SESSION_STATS_CURRENT_STATS]?.[SESSION_STATS_TOTAL_DOWNLOAD]
+  );
+  $: sessionUpload = formatBytes(
+    $sessionStats[SESSION_STATS_CURRENT_STATS]?.[SESSION_STATS_TOTAL_UPLOAD]
+  );
 
   let mouseX = 0;
   let hovering = false;
@@ -141,6 +159,19 @@
       <SpeedLimit direction="upload" hidden={hovering} />
     </div>
   </div>
+  <div class="session" title="Transferred since Transmission started">
+    <span class="session__label">session</span>
+    <span class="session__value session__value--download"
+      >↓ {sessionDownload.value}<span class="session__size"
+        >{sessionDownload.size}</span
+      ></span
+    >
+    <span class="session__value session__value--upload"
+      >↑ {sessionUpload.value}<span class="session__size"
+        >{sessionUpload.size}</span
+      ></span
+    >
+  </div>
   <div class="timestamp" class:hidden={!hovering}>
     {relativeTime(timestamp)}
   </div>
@@ -192,6 +223,7 @@
     display: grid;
     grid-template:
       'rate-download rate-upload' auto
+      'session session' auto
       'timestamp timestamp' auto / 1fr 1fr;
     font-size: 12px;
     padding: 0 10px;
@@ -200,6 +232,34 @@
 
   .rate--download {
     grid-area: rate-download;
+  }
+
+  .session {
+    grid-area: session;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .session__label {
+    color: var(--color-graph-text);
+    font-size: 10px;
+  }
+
+  .session__value--download {
+    color: var(--color-download);
+  }
+
+  .session__value--upload {
+    color: var(--color-upload);
+  }
+
+  .session__size {
+    font-size: 10px;
+    opacity: 0.7;
   }
 
   .rate--upload {
@@ -229,9 +289,11 @@
 
   .data {
     display: grid;
+    /* The volumes column follows its content: sharing the width with an empty
+       column used to squeeze the unit against the limit badge. */
     grid-template:
-      'speed speed speed' 26px
-      'bytes limit -' auto / 1fr fit-content(20px) 1fr;
+      'speed limit' 26px
+      'bytes .' auto / max-content fit-content(20px);
     column-gap: 5px;
     row-gap: 1px;
   }

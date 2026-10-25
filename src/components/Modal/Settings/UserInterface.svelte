@@ -43,6 +43,7 @@
       darkMode.set(newDarkMode);
       diskUsage.set(newDiskUsage);
       alerts.add('Succesfully saved user interface settings');
+      modals.close();
     } catch (e) {
       console.error(e);
       alerts.add(

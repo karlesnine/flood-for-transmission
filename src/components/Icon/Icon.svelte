@@ -23,6 +23,7 @@
   import InformationIcon from './InformationIcon.svelte';
   import Limits from './Limits.svelte';
   import MenuIcon from './MenuIcon.svelte';
+  import Pencil from './Pencil.svelte';
   import RatioIcon from './RatioIcon.svelte';
   import Remove from './Remove.svelte';
   import Search from './Search.svelte';
@@ -58,6 +59,7 @@
     InformationIcon,
     Limits,
     MenuIcon,
+    Pencil,
     RatioIcon,
     Remove,
     Search,

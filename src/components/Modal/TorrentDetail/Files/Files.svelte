@@ -1,6 +1,7 @@
 <script>
   import { torrentDetails } from '~helpers/stores';
   import {
+    TRANSMISSION_COLUMN,
     TRANSMISSION_COLUMN_DOWNLOAD_DIR,
     TRANSMISSION_COLUMN_FILES,
   } from '~helpers/constants/columns';
@@ -25,6 +26,12 @@
     a.name.localeCompare(b.name)
   );
   $: structure = getFolderStructure(files);
+  // The tree is built without the torrent folder, so remember it: nested paths
+  // are rebuilt from it when renaming something.
+  $: rootPath =
+    files.length && files[0].name.includes('/')
+      ? files[0].name.split('/')[0]
+      : null;
 
   const handleSelectedFilePrioChange = (event) => {
     torrentDetails.setPriority($torrentDetails, selectedFiles, event.detail);
@@ -33,6 +40,13 @@
   const handleSingleFilePrioChange = (fileIndex, event) => {
     torrentDetails.setPriority($torrentDetails, [fileIndex], event.detail);
   };
+
+  const renamePath = (path, newName) =>
+    torrentDetails.renamePath(
+      $torrentDetails[TRANSMISSION_COLUMN.ID],
+      path,
+      newName
+    );
 </script>
 
 <div class="container">
@@ -46,6 +60,9 @@
           $torrentDetails[TRANSMISSION_COLUMN_DOWNLOAD_DIR],
           files[0]
         )}
+        path={rootPath}
+        onRename={renamePath}
+        renamable={false}
         collapsible={false}
         strong={true}
         onSingleFilePrioChange={handleSingleFilePrioChange}

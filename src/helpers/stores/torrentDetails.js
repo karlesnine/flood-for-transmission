@@ -153,6 +153,12 @@ function createTorrentDetailsStore() {
 
       return promise;
     },
+    // Renames one file or one folder of the torrent. Transmission wants the
+    // full path of the entry as it appears in the file list, and the new name
+    // of that entry alone. Nothing is updated here: the next poll brings the
+    // new paths back from the server.
+    renamePath: (torrentId, path, name) =>
+      transmission.renamePath([torrentId], path, name),
   };
 }
 

@@ -316,8 +316,8 @@
     padding: 0 2px;
     margin-left: 2px;
     cursor: pointer;
-    fill: var(--color-modal-files-icon);
-    opacity: 0.4;
+    fill: var(--color-modal-text-light);
+    opacity: 0.75;
     display: flex;
     align-items: center;
     align-self: center;
@@ -329,8 +329,8 @@
   }
 
   .rename :global(.icon) {
-    height: 12px;
-    width: 12px;
+    height: 13px;
+    width: 13px;
   }
 
   .rename-input {

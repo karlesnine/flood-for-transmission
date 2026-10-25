@@ -1,5 +1,5 @@
 <script>
-  import { torrentDetails, session } from '~helpers/stores';
+  import { torrentDetails, torrents, alerts, session } from '~helpers/stores';
   import {
     TRANSMISSION_COLUMN,
     SESSION_COLUMN_UNITS,
@@ -21,6 +21,8 @@
   let uploadLimitEnabled = null;
   let honorsSessionLimits = null;
   let location = null;
+  let originalLocation = null;
+  let moveData = true;
   let peerLimit = null;
   let queuePosition = null;
   let seedIdleLimit = null;
@@ -53,7 +55,8 @@
       $torrentDetails[TRANSMISSION_COLUMN.UPLOAD_LIMIT_ENABLED];
     honorsSessionLimits =
       $torrentDetails[TRANSMISSION_COLUMN.HONORS_SESSION_LIMITS];
-    location = $torrentDetails[TRANSMISSION_COLUMN.DOWNLOAD_DIR];
+    originalLocation = $torrentDetails[TRANSMISSION_COLUMN.DOWNLOAD_DIR];
+    location = originalLocation;
     peerLimit = $torrentDetails[TRANSMISSION_COLUMN.PEER_LIMIT];
     queuePosition = $torrentDetails[TRANSMISSION_COLUMN.QUEUE_POSITION];
     seedIdleLimit = $torrentDetails[TRANSMISSION_COLUMN.SEED_IDLE_LIMIT];
@@ -66,17 +69,22 @@
     loadingInitial = false;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (loadingSubmit) return;
     loadingSubmit = true;
 
-    torrentDetails
-      .setDetails($torrentDetails, {
+    const torrentId = $torrentDetails[TRANSMISSION_COLUMN.ID];
+    const locationChanged = location !== originalLocation;
+
+    try {
+      // The download directory is deliberately left out here: torrent-set
+      // ignores it, which is why saving this dialog never moved anything.
+      await torrentDetails.setDetails($torrentDetails, {
         [TRANSMISSION_COLUMN.DOWNLOAD_LIMIT]: downloadLimit,
         [TRANSMISSION_COLUMN.DOWNLOAD_LIMIT_ENABLED]: downloadLimitEnabled,
         [TRANSMISSION_COLUMN.UPLOAD_LIMIT]: uploadLimit,
         [TRANSMISSION_COLUMN.UPLOAD_LIMIT_ENABLED]: uploadLimitEnabled,
         [TRANSMISSION_COLUMN.HONORS_SESSION_LIMITS]: honorsSessionLimits,
-        [TRANSMISSION_COLUMN.DOWNLOAD_DIR]: location,
         [TRANSMISSION_COLUMN.PEER_LIMIT]: peerLimit,
         [TRANSMISSION_COLUMN.QUEUE_POSITION]: queuePosition,
         [TRANSMISSION_COLUMN.SEED_IDLE_LIMIT]: seedIdleLimit,
@@ -84,13 +92,18 @@
         [TRANSMISSION_COLUMN.SEED_RATIO_LIMIT]: seedRatioLimit,
         [TRANSMISSION_COLUMN.SEED_RATIO_MODE]: seedRatioMode,
         [TRANSMISSION_COLUMN.SEQUENTIAL_DOWNLOAD]: sequentialDownload,
-      })
-      .catch(() => {
-        setServerValues();
-      })
-      .finally(() => {
-        loadingSubmit = false;
       });
+
+      if (locationChanged) {
+        await torrents.setLocation([torrentId], location, moveData);
+        originalLocation = location;
+      }
+    } catch {
+      alerts.add('Failed to save the torrent configuration', 'negative');
+      setServerValues();
+    } finally {
+      loadingSubmit = false;
+    }
   }
 
   $: size = getSize($torrentDetails[TRANSMISSION_COLUMN.SIZE], {
@@ -133,6 +146,11 @@
   <div class="inputs">
     <div class="input-group">
       <InputPath bind:value={location} label="Download location" />
+      <Checkbox
+        label="Move data"
+        hint="Move the files already downloaded to the new location. When disabled, only the download directory is changed."
+        bind:checked={moveData}
+      />
     </div>
   </div>
 
